@@ -1,88 +1,155 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Підбір авто з США</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { background: #23272f; color: #fff; font-family: Arial,sans-serif; margin:0; }
-        .container { max-width: 400px; margin: 40px auto; background: #2d323b; border-radius: 12px; padding: 24px; box-shadow: 0 2px 16px #0004; }
-        h2 { text-align: center; margin-bottom: 20px; }
-        label { display: block; margin: 16px 0 4px; }
-        select, button { width: 100%; padding: 10px; border-radius: 6px; border: none; margin-bottom: 10px; font-size: 16px; }
-        button { background: #00e0b8; color: #222; font-weight: bold; cursor: pointer; }
-        .result { background: #22262e; border-radius: 8px; padding: 12px; margin-top: 18px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Вкажіть параметри пошуку</h2>
-        <label>Марка</label>
-        <select id="brand">
-            <option value="">Оберіть зі списку</option>
-            <option>Acura</option>
-            <option>Audi</option>
-            <option>BMW</option>
-            <option>Chevrolet</option>
-            <option>Ford</option>
-            <option>Honda</option>
-            <option>Hyundai</option>
-            <option>Kia</option>
-            <option>Mercedes-Benz</option>
-            <option>Toyota</option>
-        </select>
-        <label>Рік</label>
-        <select id="year">
-            <option value="">Оберіть</option>
-        </select>
-        <label>Тип приводу</label>
-        <select id="drive">
-            <option value="">Оберіть зі списку</option>
-            <option>Передний</option>
-            <option>Задний</option>
-            <option>Полный</option>
-        </select>
-        <label>Тип палива</label>
-        <select id="fuel">
-            <option value="">Оберіть зі списку</option>
-            <option>Бензин</option>
-            <option>Дизель</option>
-            <option>Електро</option>
-            <option>Гібрид</option>
-            <option>Газ</option>
-        </select>
-        <button onclick="showResult()">Показати авто</button>
-        <div class="result" id="result" style="display:none"></div>
-    </div>
-    <script>
-        // Заполнение годов
-        const yearSel = document.getElementById('year');
-        for(let y=2005; y<=2025; y++) {
-            let opt = document.createElement('option');
-            opt.value = opt.text = y;
-            yearSel.appendChild(opt);
-        }
+import logging
+from aiogram import Bot, Dispatcher, types, executor
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
-        function showResult() {
-            const brand = document.getElementById('brand').value;
-            const year = document.getElementById('year').value;
-            const drive = document.getElementById('drive').value;
-            const fuel = document.getElementById('fuel').value;
-            if(!brand || !year || !drive || !fuel) {
-                alert('Будь ласка, заповніть всі поля!');
-                return;
-            }
-            // Здесь можно сделать fetch к вашему серверу или боту, если нужно
-            document.getElementById('result').style.display = 'block';
-            document.getElementById('result').innerHTML = `
-                <b>Знайдено 3 авто:</b><br>
-                <ul>
-                    <li>${brand} ${year}, ${drive}, ${fuel}, 12 000 $</li>
-                    <li>${brand} ${year}, ${drive}, ${fuel}, 10 500 $</li>
-                    <li>${brand} ${year}, ${drive}, ${fuel}, 9 800 $</li>
-                </ul>
-            `;
+API_TOKEN = '8151754448:AAGFo8yeBd1CGgBIdOJb7Dgz4uuGcDTNQxU'
+
+logging.basicConfig(level=logging.INFO)
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+# Заглушки для фильтров
+CAR_BRANDS = [
+    "Acura", "Audi", "BMW", "Chevrolet", "Ford", "Honda", "Hyundai", "Kia", "Mercedes-Benz", "Toyota"
+]
+
+CAR_MODELS = {
+    "Acura": [
+        "MDX", "RDX", "TLX", "ILX", "RLX", "NSX", "ZDX", "TSX", "TL", "CL", "RSX", "Legend", "Vigor", "Integra", "SLX"
+    ],
+    "Audi": [
+        "A3", "A4", "A5", "A6", "A7", "A8", "Q3", "Q5", "Q7", "Q8", "TT", "S3", "S4", "S5", "S6"
+    ],
+    "BMW": [
+        "1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "6 Series", "7 Series", "8 Series", "X1", "X2", "X3", "X4", "X5", "X6", "X7"
+    ],
+    "Chevrolet": [
+        "Aveo", "Camaro", "Captiva", "Cobalt", "Colorado", "Corvette", "Cruze", "Equinox", "Impala", "Malibu", "Orlando", "Silverado", "Spark", "Suburban", "Tahoe"
+    ],
+    "Ford": [
+        "C-Max", "EcoSport", "Edge", "Escape", "Expedition", "Explorer", "F-150", "Fiesta", "Focus", "Fusion", "Kuga", "Mondeo", "Mustang", "Ranger", "Transit"
+    ],
+    "Honda": [
+        "Accord", "Civic", "CR-V", "CR-Z", "Element", "Fit", "HR-V", "Insight", "Jazz", "Odyssey", "Passport", "Pilot", "Prelude", "Ridgeline", "Stream"
+    ],
+    "Hyundai": [
+        "Accent", "Creta", "Elantra", "Genesis", "Getz", "Grand Santa Fe", "i10", "i20", "i30", "ix35", "Kona", "Santa Fe", "Solaris", "Sonata", "Tucson"
+    ],
+    "Kia": [
+        "Carens", "Carnival", "Ceed", "Cerato", "Forte", "K5", "Magentis", "Mohave", "Optima", "Picanto", "Rio", "Seltos", "Sorento", "Soul", "Sportage"
+    ],
+    "Mercedes-Benz": [
+        "A-Class", "B-Class", "C-Class", "CLA", "CLS", "E-Class", "G-Class", "GLA", "GLB", "GLC", "GLE", "GLK", "GLS", "S-Class", "V-Class"
+    ],
+    "Toyota": [
+        "Avalon", "Camry", "Corolla", "C-HR", "FJ Cruiser", "Highlander", "Land Cruiser", "Prius", "RAV4", "Sequoia", "Sienna", "Tacoma", "Tundra", "Venza", "Yaris"
+    ]
+}
+
+CAR_YEARS = [str(y) for y in range(2005, 2026)]
+DRIVE_TYPES = ["Передний", "Задний", "Полный"]
+FUEL_TYPES = ["Бензин", "Дизель", "Электро", "Гибрид", "Газ"]
+
+# Пример функции-заглушки для парсинга copart.com
+def get_cars(brand, model, year_from, year_to, drive, fuel):
+    # Здесь должен быть парсер copart.com, который возвращает список авто
+    # Пример результата:
+    return [
+        {
+            "brand": "Acura",
+            "model": "MDX TECHNOLOGY",
+            "year": "2020",
+            "drive": "Полный привод",
+            "fuel": "Бензин",
+            "engine": "3.5л",
+            "price": "12 000 $",
+            "img": "https://example.com/acura1.jpg",
+            "link": "https://copart.com/lot/12345678"
+        },
+        {
+            "brand": "Acura",
+            "model": "MDX TECHNOLOGY",
+            "year": "2018",
+            "drive": "Полный привод",
+            "fuel": "Бензин",
+            "engine": "3.5л",
+            "price": "7 000 $",
+            "img": "https://example.com/acura2.jpg",
+            "link": "https://copart.com/lot/87654321"
         }
-    </script>
-</body>
-</html>
+    ]
+
+# Хранилище состояний пользователя
+user_filters = {}
+
+@dp.message_handler(commands=['start'])
+async def start_cmd(message: types.Message):
+    webapp_url = "https://monax777.github.io/online-casino/"
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton("Открыть подбор авто", web_app=WebAppInfo(url=webapp_url)))
+    await message.answer(
+        "Нажмите кнопку ниже для подбора авто 👇",
+        reply_markup=kb
+    )
+
+# Пример фильтров через обычные кнопки (если без WebApp)
+@dp.message_handler(lambda m: m.text == "Подобрать авто")
+async def show_filters(message: types.Message):
+    kb = InlineKeyboardMarkup(row_width=2)
+    for brand in CAR_BRANDS[:10]:
+        kb.insert(InlineKeyboardButton(brand, callback_data=f"brand_{brand}"))
+    await message.answer("Выберите марку:", reply_markup=kb)
+
+@dp.callback_query_handler(lambda c: c.data.startswith("brand_"))
+async def select_brand(call: types.CallbackQuery):
+    brand = call.data.split("_", 1)[1]
+    user_filters[call.from_user.id] = {"brand": brand}
+    kb = InlineKeyboardMarkup(row_width=3)
+    for year in CAR_YEARS:
+        kb.insert(InlineKeyboardButton(year, callback_data=f"year_{year}"))
+    await call.message.edit_text(f"Марка: {brand}\nВыберите год выпуска:", reply_markup=kb)
+
+@dp.callback_query_handler(lambda c: c.data.startswith("year_"))
+async def select_year(call: types.CallbackQuery):
+    year = call.data.split("_", 1)[1]
+    user_filters[call.from_user.id]["year"] = year
+    kb = InlineKeyboardMarkup(row_width=2)
+    for drive in DRIVE_TYPES:
+        kb.insert(InlineKeyboardButton(drive, callback_data=f"drive_{drive}"))
+    await call.message.edit_text(f"Год: {year}\nВыберите тип привода:", reply_markup=kb)
+
+@dp.callback_query_handler(lambda c: c.data.startswith("drive_"))
+async def select_drive(call: types.CallbackQuery):
+    drive = call.data.split("_", 1)[1]
+    user_filters[call.from_user.id]["drive"] = drive
+    kb = InlineKeyboardMarkup(row_width=2)
+    for fuel in FUEL_TYPES:
+        kb.insert(InlineKeyboardButton(fuel, callback_data=f"fuel_{fuel}"))
+    await call.message.edit_text(f"Привод: {drive}\nВыберите тип топлива:", reply_markup=kb)
+
+@dp.callback_query_handler(lambda c: c.data.startswith("fuel_"))
+async def select_fuel(call: types.CallbackQuery):
+    fuel = call.data.split("_", 1)[1]
+    user_filters[call.from_user.id]["fuel"] = fuel
+    filters = user_filters[call.from_user.id]
+    # Получаем авто (здесь будет реальный парсер)
+    cars = get_cars(filters["brand"], "", filters["year"], filters["year"], filters["drive"], fuel)
+    if not cars:
+        await call.message.edit_text("Авто не найдено по выбранным параметрам.")
+        return
+    for car in cars:
+        text = (
+            f"<b>{car['brand']} {car['model']}</b>\n"
+            f"🗓 Рік: {car['year']}\n"
+            f"🛞 {car['drive']}\n"
+            f"⛽️ {car['fuel']}\n"
+            f"🚗 {car['engine']}\n\n"
+            f"💰 Ціна в США: {car['price']}\n\n"
+            f"Для прорахунку вартості під ключ в Україну, тисніть кнопку «Ціна під ключ» 👇"
+        )
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton("🔒 Ціна під ключ", url=car['link']))
+        await call.message.answer_photo(car['img'], caption=text, parse_mode="HTML", reply_markup=kb)
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
