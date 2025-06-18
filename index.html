@@ -1,31 +1,88 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>Онлайн Казино</title>
-  <style>
-    body { text-align: center; background: #111; color: white; font-family: sans-serif; }
-    .reels { font-size: 5em; margin: 50px 0; }
-    button { padding: 10px 20px; font-size: 1.5em; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Підбір авто з США</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #23272f; color: #fff; font-family: Arial,sans-serif; margin:0; }
+        .container { max-width: 400px; margin: 40px auto; background: #2d323b; border-radius: 12px; padding: 24px; box-shadow: 0 2px 16px #0004; }
+        h2 { text-align: center; margin-bottom: 20px; }
+        label { display: block; margin: 16px 0 4px; }
+        select, button { width: 100%; padding: 10px; border-radius: 6px; border: none; margin-bottom: 10px; font-size: 16px; }
+        button { background: #00e0b8; color: #222; font-weight: bold; cursor: pointer; }
+        .result { background: #22262e; border-radius: 8px; padding: 12px; margin-top: 18px; }
+    </style>
 </head>
 <body>
-  <h1>🔥 Онлайн Казино 🔥</h1>
-  <div class="reels" id="reels">🍒 🍋 🍊</div>
-  <button onclick="spin()">Крутить</button>
-  <p id="result"></p>
+    <div class="container">
+        <h2>Вкажіть параметри пошуку</h2>
+        <label>Марка</label>
+        <select id="brand">
+            <option value="">Оберіть зі списку</option>
+            <option>Acura</option>
+            <option>Audi</option>
+            <option>BMW</option>
+            <option>Chevrolet</option>
+            <option>Ford</option>
+            <option>Honda</option>
+            <option>Hyundai</option>
+            <option>Kia</option>
+            <option>Mercedes-Benz</option>
+            <option>Toyota</option>
+        </select>
+        <label>Рік</label>
+        <select id="year">
+            <option value="">Оберіть</option>
+        </select>
+        <label>Тип приводу</label>
+        <select id="drive">
+            <option value="">Оберіть зі списку</option>
+            <option>Передний</option>
+            <option>Задний</option>
+            <option>Полный</option>
+        </select>
+        <label>Тип палива</label>
+        <select id="fuel">
+            <option value="">Оберіть зі списку</option>
+            <option>Бензин</option>
+            <option>Дизель</option>
+            <option>Електро</option>
+            <option>Гібрид</option>
+            <option>Газ</option>
+        </select>
+        <button onclick="showResult()">Показати авто</button>
+        <div class="result" id="result" style="display:none"></div>
+    </div>
+    <script>
+        // Заполнение годов
+        const yearSel = document.getElementById('year');
+        for(let y=2005; y<=2025; y++) {
+            let opt = document.createElement('option');
+            opt.value = opt.text = y;
+            yearSel.appendChild(opt);
+        }
 
-  <script>
-    const symbols = ["🍒", "🍋", "🍊", "🍉", "7️⃣", "⭐"];
-    function spin() {
-      const reels = Array(3).fill().map(() => symbols[Math.floor(Math.random() * symbols.length)]);
-      document.getElementById('reels').innerText = reels.join(' ');
-      if (reels[0] === reels[1] && reels[1] === reels[2]) {
-        document.getElementById('result').innerText = "🎉 Джекпот!";
-      } else {
-        document.getElementById('result').innerText = "😢 Попробуй снова!";
-      }
-    }
-  </script>
+        function showResult() {
+            const brand = document.getElementById('brand').value;
+            const year = document.getElementById('year').value;
+            const drive = document.getElementById('drive').value;
+            const fuel = document.getElementById('fuel').value;
+            if(!brand || !year || !drive || !fuel) {
+                alert('Будь ласка, заповніть всі поля!');
+                return;
+            }
+            // Здесь можно сделать fetch к вашему серверу или боту, если нужно
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerHTML = `
+                <b>Знайдено 3 авто:</b><br>
+                <ul>
+                    <li>${brand} ${year}, ${drive}, ${fuel}, 12 000 $</li>
+                    <li>${brand} ${year}, ${drive}, ${fuel}, 10 500 $</li>
+                    <li>${brand} ${year}, ${drive}, ${fuel}, 9 800 $</li>
+                </ul>
+            `;
+        }
+    </script>
 </body>
 </html>
